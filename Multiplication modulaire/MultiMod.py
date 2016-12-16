@@ -76,30 +76,38 @@ class Interface(Frame):
         self.boutonMod = Radiobutton(self.zoneDeControleAnimation, text='modulo', variable=self.choix, value="mod")
 
 
-                    # de... à... par pas de ...
+                    # de... à... par frequence de ...
         self.labelDe = Label(self.zoneDeControleAnimation, text='De: ')
-        self.spinDe = Spinbox(self.zoneDeControleAnimation, from_=0, to=1000)
+        self.spinDe = Spinbox(self.zoneDeControleAnimation, from_=1, to=100, increment=10, command=self.calculerFrequence)
         self.labelA = Label(self.zoneDeControleAnimation, text='à: ')
-        self.spinA = Spinbox(self.zoneDeControleAnimation, from_=0, to=1000)
-        self.labelPas = Label(self.zoneDeControleAnimation, text='par pas de: ')
-        self.spinPas = Spinbox(self.zoneDeControleAnimation, from_=0, to=1)
+        self.spinA = Spinbox(self.zoneDeControleAnimation, from_=1, to=300, increment=10, command=self.calculerFrequence)
+
+        self.labelFrequence = Label(self.zoneDeControleAnimation, text='frequence: ')
+        self.spinFrequence = Spinbox(self.zoneDeControleAnimation, from_=0.0001, to=100, increment=0.05, command=self.calculerDuree)
+        self.labelDuree = Label(self.zoneDeControleAnimation, text='durée: ')
+        self.spinDuree = Spinbox(self.zoneDeControleAnimation, from_=1, to=20, increment=1, command=self.calculerFrequence)
+
+        self.calculerFrequence()
 
 
                 # bouton de lancement
         self.lancerAnimation = Button(self.zoneDeControleAnimation, text="Lancer", command=self.animation)
 
                 #construction grille:
-        self.boutonA.grid(row=0, column=0)
-        self.boutonMod.grid(row=0, column=1)
+        self.boutonA.grid(row=0, column=1)
+        self.boutonMod.grid(row=0, column=2)
 
         self.labelDe.grid(row=1, column=0)
         self.spinDe.grid(row=1, column=1)
         self.labelA.grid(row=1, column=2)
         self.spinA.grid(row=1, column=3)
-        self.labelPas.grid(row=2, column=0)
-        self.spinPas.grid(row=2, column=1)
 
-        self.lancerAnimation.grid(row=3, column=0)
+        self.labelFrequence.grid(row=2, column=0)
+        self.spinFrequence.grid(row=2, column=1)
+        self.labelDuree.grid(row=2, column=2)
+        self.spinDuree.grid(row=2, column=3)
+
+        self.lancerAnimation.grid(row=3, column=1, columnspan=2)
 
 
         #construction grille fenetre
@@ -111,7 +119,11 @@ class Interface(Frame):
         self.zoneDeControle.grid(row=1, column=0)
 
 
+
+
+
     def animation(self):
+        self.calculerFrequence()
         q = 1
 
 
@@ -145,6 +157,36 @@ class Interface(Frame):
         self.canvas.show()
 
         self.canvas.get_tk_widget().pack()
+
+
+    ###### Fonctions tests Colin ######
+
+    def calculerFrequence(self):
+
+        duree = float(self.spinDuree.get())
+
+        nbDeframe = duree*20
+        min = float(self.spinDe.get())
+        max = float(self.spinA.get())
+
+
+        self.spinFrequence.delete(0, 'end')
+        self.spinFrequence.insert('end', str((round(((max - min)/nbDeframe), 3))))
+
+    def calculerDuree(self):
+
+        frequence = float(self.spinFrequence.get())
+        min = float(self.spinDe.get())
+        max = float(self.spinA.get())
+
+        self.spinDuree.delete(0, 'end')
+        self.spinDuree.insert(0, str((round((max - min) / (frequence * 20), 3))))
+
+
+
+
+
+
 
 
 fenetre = Tk()
