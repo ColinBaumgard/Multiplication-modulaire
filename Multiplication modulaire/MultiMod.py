@@ -22,13 +22,10 @@ class Interface(Frame):
 
         Frame.__init__(self, fenetre, width=768, height=576, **kwargs)
 
-        # self.pack(fill=BOTH)
-
-        couco = 1
 
         self.fenetre = fenetre
 
-        # variable globales
+        # variables globales
 
         self.a = DoubleVar()
         self.mod = DoubleVar()
@@ -127,31 +124,21 @@ class Interface(Frame):
         self.afficher(a, mod)
 
 
-    def calculModulo(self, a, p):
-        l = []
-        for b in range(0, p):
-            l.append([b, (a * b) % p])
-        return l
-
     def afficher(self, a, mod):
 
         self.graphique.clear()
 
 
-        listeCouples = self.calculModulo(a, mod)
-
-
-        nPoints = mod
-        nCouples = len(listeCouples)
-
         if mod != 0:
-            delta = 2 * np.pi / nPoints
+            delta = 2 * np.pi / mod
         else:
             delta = 0
 
-        for i in range(0, nCouples):
-            alpha = listeCouples[i][0] * delta
-            beta = listeCouples[i][1] * delta
+
+        for b in range(0, mod):
+
+            alpha = b * delta
+            beta = ((a * b) % mod) * delta
 
             self.graphique.plot([alpha, beta], [1, 1], c='r')
 
@@ -164,6 +151,3 @@ fenetre = Tk()
 interface = Interface(fenetre)
 
 interface.mainloop()
-
-
-print('coucou')
