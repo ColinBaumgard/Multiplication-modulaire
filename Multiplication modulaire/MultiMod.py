@@ -25,19 +25,15 @@ class Interface(Frame):
 
         Frame.__init__(self, fenetre, width=768, height=576, **kwargs)
 
-        self.imagePasSeconde = 12
+        self.imageParSeconde = 12
 
-        self.atest = 0
-        self.idImage = 0
+        #self.atest = 0
+        #self.idImage = 0
 
 
         self.fenetre = fenetre
 
         # variables globales
-
-        self.a = DoubleVar()
-        self.mod = DoubleVar()
-
 
         # Zone de graphique:
         self.zoneGraphique = Frame(self.fenetre)
@@ -99,27 +95,36 @@ class Interface(Frame):
         self.spinA.delete(0, 'end')
         self.spinA.insert('end', 200)
 
-        self.labelDuree = Label(self.zoneDeControleAnimation, text="durée de l'animation(s): ")
+        self.labelDuree = Label(self.zoneDeControleAnimation, text="durée(s): ")
         self.spinDuree = Spinbox(self.zoneDeControleAnimation, from_=1, to=50, increment=1)
         self.spinDuree.delete(0, 'end')
         self.spinDuree.insert('end', 10)
+
+        self.labelMod = Label(self.zoneDeControleAnimation, text="modulo: ")
+        self.spinMod = Spinbox(self.zoneDeControleAnimation, from_=1, to=1000, increment=1)
+        self.spinMod.delete(0, 'end')
+        self.spinMod.insert('end', 100)
 
 
                 # bouton de lancement
         self.lancerAnimation = Button(self.zoneDeControleAnimation, text="Générer l'animation", command=self.animation)
 
                 # Témoin de calcul
-        self.labelAvancement = Label(self.zoneDeControleAnimation, text='')
+        self.textAvancement = StringVar()
+        self.labelAvancement = Label(self.zoneDeControleAnimation, textvariable=self.textAvancement)
 
-                #construction grille:
+                # construction grille:
 
         self.labelDe.grid(row=0, column=0)
         self.spinDe.grid(row=0, column=1)
         self.labelA.grid(row=0, column=2)
         self.spinA.grid(row=0, column=3)
 
-        self.labelDuree.grid(row=1, column=0)
-        self.spinDuree.grid(row=1, column=1)
+
+        self.labelMod.grid(row=1, column=0)
+        self.spinMod.grid(row=1, column=1)
+        self.labelDuree.grid(row=1, column=2)
+        self.spinDuree.grid(row=1, column=3)
 
         self.lancerAnimation.grid(row=2, column=0, columnspan=2)
         self.labelAvancement.grid(row=2, column=2)
@@ -135,19 +140,10 @@ class Interface(Frame):
 
 
 
+    def actualiser(self):
 
-
-    def animation2(self):
-        self.calculerFrequence()
-
-
-
-
-    def actualiser(self, adsf):
-
-        # self.a += 1
-        a = int(self.a.get())
-        mod = int(self.mod.get())
+        a = float(self.valeurA.get())
+        mod = int(self.valeurMod.get())
 
         self.afficher(a, mod)
 
@@ -180,61 +176,60 @@ class Interface(Frame):
 
     def verifier(self):
 
-        duree = float(self.spinDuree.get())
-
-        nbDeframe = duree*self.imagePasSeconde
-        min = float(self.spinDe.get())
-        max = float(self.spinA.get())
+        if float(self.spinDe.get()) > float(self.spinA.get()):
+            self.spinA.delete(0, 'end')
+            self.spinA.insert('end', float(self.spinDe.get()))
 
 
-        self.spinFrequence.delete(0, 'end')
-        self.spinFrequence.insert('end', str((round(((max - min)/nbDeframe), 3))))
-
-    def calculerDuree(self):
-
-        frequence = float(self.spinFrequence.get())
-        min = float(self.spinDe.get())
-        max = float(self.spinA.get())
-
-        self.spinDuree.delete(0, 'end')
-        self.spinDuree.insert(0, str((round((max - min) / (frequence * self.imagePasSeconde), 3))))
 
     def animation(self):
 
+        self.verifier()
+
         showinfo('Animation', 'Le rendu peut prendre un peu de temps, soyez patient...')
 
-        self.aLoop = 0
-        self.modLoop = 200
 
 
-        self.figureAnim = Figure(figsize=(10, 10), dpi=500)
-        self.graphiqueAnim = self.figureAnim.add_subplot(111, projection='polar')
-        self.canvasAnim = FigureCanvasTkAgg(self.figureAnim, self.zoneGraphique)
+        self.aLoop = float(self.spinDe.get())
+        self.modLoop = int(self.spinMod.get())
+        limite = float(self.spinA.get())
+        duree = float(self.spinDuree.get())
+
+        self.nbDeFrames = int(self.imageParSeconde * duree)
+
+        delta = limite - self.aLoop
+
+        self.pas = round(delta/self.nbDeFrames, 2)
+
+        #self.figureAnim = Figure(figsize=(10, 10), dpi=500)
+        #self.graphiqueAnim = self.figureAnim.add_subplot(111, projection='polar')
+        #self.canvasAnim = FigureCanvasTkAgg(self.figureAnim, self.zoneGraphique)
 
         Writer = animation.writers['ffmpeg']
         writer = Writer(fps=15, metadata=dict(artist='Colin Baumgard'), bitrate=10000)
 
-        #with writer.saving(self.figureAnim, 'anim.mp4', 500):
-         #   for i in range(3):
-          #      self.genererAnimation()
-           #     writer.grab_frame()
 
+        self.anim = animation.FuncAnimation(self.figure, self.genererAnimation, frames=self.nbDeFrames, interval=int(1000/self.imageParSeconde), blit=False, repeat=False)
+        #self.anim = animation.FuncAnimation(self.figure, self.genererAnimation, frames=10, interval=10, repeat=False)
 
-        anim = animation.FuncAnimation(self.figureAnim, self.genererAnimation, frames=150, interval=50, blit= False, repeat=False)
-        anim.save('anim.mp4', writer=writer)
+        self.canvas.show()
+
+        self.canvas.get_tk_widget().pack()
+
+        self.anim.save('anim.mp4', writer=writer)
 
 
         os.system("explorer.exe /e,"+ os.getcwd())
-        print("Témoin de passage animation")
 
 
 
     def genererAnimation(self, i):
 
-        print("Témoin de passage generer animation")
+        #self.textAvancement.set("Calcul: " + str(i+1) +  "/" + str(self.nbDeFrames))
 
+        #print("temoin")
 
-        self.graphiqueAnim.clear()
+        self.graphique.clear()
 
         if self.modLoop != 0:
             delta = 2 * np.pi / self.modLoop
@@ -245,11 +240,11 @@ class Interface(Frame):
             alpha = b * delta
             beta = ((self.aLoop * b) % self.modLoop) * delta
 
-            self.graphiqueAnim.plot([alpha, beta], [1,1], c='b')
+            self.graphique.plot([alpha, beta], [1,1], c='b')
 
-        self.aLoop = round(self.aLoop, 2) + 0.05
+        self.aLoop = round(self.aLoop, 2) + self.pas
 
-        return self.graphiqueAnim,
+        return self.graphique,
 
 
 
