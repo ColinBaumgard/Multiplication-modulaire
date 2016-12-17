@@ -7,7 +7,7 @@
 ################################################
 
 import matplotlib
-matplotlib.use('TkAgg')
+matplotlib.use('Agg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from matplotlib import animation
@@ -15,7 +15,8 @@ from matplotlib import animation
 import matplotlib.pyplot as plt
 import numpy as np
 from tkinter import *
-
+from tkinter.messagebox import *
+import os
 
 
 class Interface(Frame):
@@ -55,67 +56,73 @@ class Interface(Frame):
 
 
             #zoneControleStatique
-        self.zoneDeControleStatique = Frame(self.zoneDeControle)
+        self.zoneDeControleStatique = LabelFrame(self.zoneDeControle, text='Contrôle statiques')
 
-                # Scrollbar a
-        self.labelA = Label(self.zoneDeControleStatique, text='a')
-        self.scaleA = Scale(self.zoneDeControleStatique, variable=self.a, orient='horizontal', command=self.actualiser)
+                # label description:
+        self.labelDescription = Label(self.zoneDeControleStatique, text='Table des a modulo')
 
-                # Scrollbar mod
-        self.labelMod = Label(self.zoneDeControleStatique, text='modulo')
-        self.scaleMod = Scale(self.zoneDeControleStatique, variable=self.mod, orient='horizontal', command=self.actualiser)
+                # spin a
+        self.labelA = Label(self.zoneDeControleStatique, text='a:')
+        self.valeurA = Spinbox(self.zoneDeControleStatique, from_=1, to_=1000, command=self.actualiser)
+        self.valeurA.delete(0, 'end')
+        self.valeurA.insert('end', 2)
+
+                # spin mod
+        self.labelMod = Label(self.zoneDeControleStatique, text='modulo:')
+        self.valeurMod = Spinbox(self.zoneDeControleStatique, from_=1, to_=1000, command=self.actualiser)
+        self.valeurMod.delete(0, 'end')
+        self.valeurMod.insert('end', 20)
 
                 #construction grille
-        self.labelA.grid(row=0, column=0)
-        self.scaleA.grid(row=0, column=1)
+        self.labelDescription.grid(row=0, column=0)
 
-        self.labelMod.grid(row=1, column=0)
-        self.scaleMod.grid(row=1, column=1)
+        self.labelA.grid(row=1, column=0)
+        self.valeurA.grid(row=1, column=1)
+
+        self.labelMod.grid(row=2, column=0)
+        self.valeurMod.grid(row=2, column=1)
 
 
             #Zone de controle animation
-        self.zoneDeControleAnimation = Frame(self.zoneDeControle, bd=2)
+        self.zoneDeControleAnimation = LabelFrame(self.zoneDeControle, text="Création d'animations")
 
                 #Paramètres:
-                    #on fait varier mod ou a:
-        self.choix = StringVar()
-        self.choix.set('a')
-        self.boutonA = Radiobutton(self.zoneDeControleAnimation, text='a', variable=self.choix, value="a")
-        self.boutonMod = Radiobutton(self.zoneDeControleAnimation, text='modulo', variable=self.choix, value="mod")
-
 
                     # de... à... par frequence de ...
-        self.labelDe = Label(self.zoneDeControleAnimation, text='De: ')
-        self.spinDe = Spinbox(self.zoneDeControleAnimation, from_=1, to=100, increment=10, command=self.calculerFrequence)
+        self.labelDe = Label(self.zoneDeControleAnimation, text='A variant de: ')
+        self.spinDe = Spinbox(self.zoneDeControleAnimation, from_=1, to=1000, increment=10, command=self.verifier)
+        self.spinDe.delete(0, 'end')
+        self.spinDe.insert('end', 50)
+
         self.labelA = Label(self.zoneDeControleAnimation, text='à: ')
-        self.spinA = Spinbox(self.zoneDeControleAnimation, from_=1, to=300, increment=10, command=self.calculerFrequence)
+        self.spinA = Spinbox(self.zoneDeControleAnimation, from_=1, to=1000, increment=10, command=self.verifier)
+        self.spinA.delete(0, 'end')
+        self.spinA.insert('end', 200)
 
-        self.labelFrequence = Label(self.zoneDeControleAnimation, text='frequence: ')
-        self.spinFrequence = Spinbox(self.zoneDeControleAnimation, from_=0.0001, to=100, increment=0.05, command=self.calculerDuree)
-        self.labelDuree = Label(self.zoneDeControleAnimation, text='durée: ')
-        self.spinDuree = Spinbox(self.zoneDeControleAnimation, from_=1, to=20, increment=1, command=self.calculerFrequence)
-
-        self.calculerFrequence()
+        self.labelDuree = Label(self.zoneDeControleAnimation, text="durée de l'animation(s): ")
+        self.spinDuree = Spinbox(self.zoneDeControleAnimation, from_=1, to=50, increment=1)
+        self.spinDuree.delete(0, 'end')
+        self.spinDuree.insert('end', 10)
 
 
                 # bouton de lancement
-        self.lancerAnimation = Button(self.zoneDeControleAnimation, text="Lancer", command=self.animTest)
+        self.lancerAnimation = Button(self.zoneDeControleAnimation, text="Générer l'animation", command=self.animation)
+
+                # Témoin de calcul
+        self.labelAvancement = Label(self.zoneDeControleAnimation, text='')
 
                 #construction grille:
-        self.boutonA.grid(row=0, column=1)
-        self.boutonMod.grid(row=0, column=2)
 
-        self.labelDe.grid(row=1, column=0)
-        self.spinDe.grid(row=1, column=1)
-        self.labelA.grid(row=1, column=2)
-        self.spinA.grid(row=1, column=3)
+        self.labelDe.grid(row=0, column=0)
+        self.spinDe.grid(row=0, column=1)
+        self.labelA.grid(row=0, column=2)
+        self.spinA.grid(row=0, column=3)
 
-        self.labelFrequence.grid(row=2, column=0)
-        self.spinFrequence.grid(row=2, column=1)
-        self.labelDuree.grid(row=2, column=2)
-        self.spinDuree.grid(row=2, column=3)
+        self.labelDuree.grid(row=1, column=0)
+        self.spinDuree.grid(row=1, column=1)
 
-        self.lancerAnimation.grid(row=3, column=1, columnspan=2)
+        self.lancerAnimation.grid(row=2, column=0, columnspan=2)
+        self.labelAvancement.grid(row=2, column=2)
 
 
         #construction grille fenetre
@@ -130,10 +137,9 @@ class Interface(Frame):
 
 
 
-    def animation(self):
+    def animation2(self):
         self.calculerFrequence()
 
-        self.animTemp()
 
 
 
@@ -172,7 +178,7 @@ class Interface(Frame):
     ###### Fonctions tests Colin ######
 
 
-    def calculerFrequence(self):
+    def verifier(self):
 
         duree = float(self.spinDuree.get())
 
@@ -193,37 +199,42 @@ class Interface(Frame):
         self.spinDuree.delete(0, 'end')
         self.spinDuree.insert(0, str((round((max - min) / (frequence * self.imagePasSeconde), 3))))
 
-    def animTest(self):
+    def animation(self):
 
-        matplotlib.use("Agg")
+        showinfo('Animation', 'Le rendu peut prendre un peu de temps, soyez patient...')
+
         self.aLoop = 0
         self.modLoop = 200
 
-        self.iMax = 0
-        self.listeFrames = []
-        self.done = False
-        #self.line, = self.graphique.plot([0, 0], [1,1])
 
+        self.figureAnim = Figure(figsize=(10, 10), dpi=500)
+        self.graphiqueAnim = self.figureAnim.add_subplot(111, projection='polar')
+        self.canvasAnim = FigureCanvasTkAgg(self.figureAnim, self.zoneGraphique)
 
         Writer = animation.writers['ffmpeg']
-        writer = Writer(fps=15, metadata=dict(artist='Me'), bitrate=1800)
+        writer = Writer(fps=15, metadata=dict(artist='Colin Baumgard'), bitrate=10000)
+
+        #with writer.saving(self.figureAnim, 'anim.mp4', 500):
+         #   for i in range(3):
+          #      self.genererAnimation()
+           #     writer.grab_frame()
 
 
-
-        anim = animation.FuncAnimation(self.figure, self.afficher2, 25, interval=50, repeat=True)
+        anim = animation.FuncAnimation(self.figureAnim, self.genererAnimation, frames=150, interval=50, blit= False, repeat=False)
         anim.save('anim.mp4', writer=writer)
 
-        self.listeFrames = []
 
-        #self.canvas.show()
-        #self.canvas.get_tk_widget().pack()
-        matplotlib.use("TkAgg")
+        os.system("explorer.exe /e,"+ os.getcwd())
+        print("Témoin de passage animation")
 
 
-    def afficher2(self, i):
+
+    def genererAnimation(self, i):
+
+        print("Témoin de passage generer animation")
 
 
-        self.graphique.clear()
+        self.graphiqueAnim.clear()
 
         if self.modLoop != 0:
             delta = 2 * np.pi / self.modLoop
@@ -234,44 +245,17 @@ class Interface(Frame):
             alpha = b * delta
             beta = ((self.aLoop * b) % self.modLoop) * delta
 
-            self.graphique.plot([alpha, beta], [1,1], c='b')
+            self.graphiqueAnim.plot([alpha, beta], [1,1], c='b')
 
         self.aLoop = round(self.aLoop, 2) + 0.05
 
-        return self.graphique,
+        return self.graphiqueAnim,
 
-    def afficher3(self, i):
-
-        print(len(self.listeFrames), ' >? ', i)
-
-        if not self.done:
-
-            self.listeFrames.append(self.figure.add_subplot(111, projection='polar'))
-            self.listeFrames[i].clear()
-
-            if self.modLoop != 0:
-                delta = 2 * np.pi / self.modLoop
-            else:
-                delta = 0
-
-            for b in range(0, self.modLoop):
-                alpha = b * delta
-                beta = ((self.aLoop * b) % self.modLoop) * delta
-
-                self.listeFrames[i].plot([alpha, beta], [1, 1], c='b')
-
-            self.aLoop = round(self.aLoop, 2) + 0.05
-
-            if i < self.iMax:
-                self.done = True
-            else:
-                self.iMax = i
-
-        return self.listeFrames[i],
 
 
 
 fenetre = Tk()
+fenetre.title('MultiMod')
 interface = Interface(fenetre)
 
 interface.mainloop()
