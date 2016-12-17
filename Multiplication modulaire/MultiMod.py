@@ -10,10 +10,12 @@ import matplotlib
 matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
+from matplotlib import animation
 
 import matplotlib.pyplot as plt
 import numpy as np
 from tkinter import *
+
 
 
 class Interface(Frame):
@@ -25,6 +27,7 @@ class Interface(Frame):
         self.imagePasSeconde = 12
 
         self.atest = 0
+        self.idImage = 0
 
 
         self.fenetre = fenetre
@@ -96,7 +99,7 @@ class Interface(Frame):
 
 
                 # bouton de lancement
-        self.lancerAnimation = Button(self.zoneDeControleAnimation, text="Lancer", command=self.animLoopTest)
+        self.lancerAnimation = Button(self.zoneDeControleAnimation, text="Lancer", command=self.animTest)
 
                 #construction grille:
         self.boutonA.grid(row=0, column=1)
@@ -190,77 +193,82 @@ class Interface(Frame):
         self.spinDuree.delete(0, 'end')
         self.spinDuree.insert(0, str((round((max - min) / (frequence * self.imagePasSeconde), 3))))
 
-    def animTemp(self):
-
-        vMin = float(self.spinDe.get())
-        vMax = float(self.spinA.get())
-        self.vMin, self.vMax = min(vMin, vMax), max(vMin, vMax)
-
-        duree = float(self.spinDuree.get())
-        frequence = (round(((self.vMax - self.vMin)/(duree*self.imagePasSeconde)), 3))
-
-        self.pas = (self.vMax - self.vMin)/(duree*self.imagePasSeconde)
-        print(self.pas, ' => pas')
-
-
-        choix = self.choix.get()
-
-        if choix == 'a':
-            self.animLoopA()
-        else:
-            self.animLoopMod()
-
-
-
-    def animLoopA(self):
-
-        self.afficher(self.vMin, int(self.scaleMod.get()))
-        self.vMin += self.pas
-
-        if self.vMin <= self.vMax:
-            self.fenetre.after(int(1000/self.imagePasSeconde), self.animLoopA)
-
-    def animLoopMod(self):
-
-        self.afficher(int(self.scaleA.get()), self.vMin)
-        self.vMin += self.pas
-
-        if self.vMin <= self.vMax:
-            self.fenetre.after(int(1000/self.imagePasSeconde), self.animLoopMod)
-
     def animTest(self):
-        matplotlib.use('Agg')
-        self.animLoopTest()
-        matplotlib.use('TkAgg')
+
+        matplotlib.use("Agg")
+        self.aLoop = 0
+        self.modLoop = 200
+
+        self.iMax = 0
+        self.listeFrames = []
+        self.done = False
+        #self.line, = self.graphique.plot([0, 0], [1,1])
 
 
-    def animLoopTest(self):
-        self.afficher2(self.atest, 10)
-        self.atest = round(self.atest + 0.05, 2)
-        #print(self.atest)
-        if self.atest <= 5:
-            self.animLoopTest()
+        Writer = animation.writers['ffmpeg']
+        writer = Writer(fps=15, metadata=dict(artist='Me'), bitrate=1800)
 
-    def afficher2(self, a, mod):
+
+
+        anim = animation.FuncAnimation(self.figure, self.afficher2, 25, interval=50, repeat=True)
+        anim.save('anim.mp4', writer=writer)
+
+        self.listeFrames = []
+
+        #self.canvas.show()
+        #self.canvas.get_tk_widget().pack()
+        matplotlib.use("TkAgg")
+
+
+    def afficher2(self, i):
+
 
         self.graphique.clear()
 
-        if mod != 0:
-            delta = 2 * np.pi / mod
+        if self.modLoop != 0:
+            delta = 2 * np.pi / self.modLoop
         else:
             delta = 0
 
-        for b in range(0, mod):
-            #alpha = b * delta
-            #beta = ((a * b) % mod) * delta
+        for b in range(0, self.modLoop):
+            alpha = b * delta
+            beta = ((self.aLoop * b) % self.modLoop) * delta
 
-            self.graphique.plot([b, mod], [1, 1], c='r')
+            self.graphique.plot([alpha, beta], [1,1], c='b')
 
-        self.figure.suptitle('Table de ' + str(round(a, 1)) + ' modulo ' + str(mod))
+        self.aLoop = round(self.aLoop, 2) + 0.05
 
-        self.canvas.show()
+        return self.graphique,
 
-        self.canvas.get_tk_widget().pack()
+    def afficher3(self, i):
+
+        print(len(self.listeFrames), ' >? ', i)
+
+        if not self.done:
+
+            self.listeFrames.append(self.figure.add_subplot(111, projection='polar'))
+            self.listeFrames[i].clear()
+
+            if self.modLoop != 0:
+                delta = 2 * np.pi / self.modLoop
+            else:
+                delta = 0
+
+            for b in range(0, self.modLoop):
+                alpha = b * delta
+                beta = ((self.aLoop * b) % self.modLoop) * delta
+
+                self.listeFrames[i].plot([alpha, beta], [1, 1], c='b')
+
+            self.aLoop = round(self.aLoop, 2) + 0.05
+
+            if i < self.iMax:
+                self.done = True
+            else:
+                self.iMax = i
+
+        return self.listeFrames[i],
+
 
 
 fenetre = Tk()
