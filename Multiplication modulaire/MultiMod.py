@@ -168,7 +168,7 @@ class Interface(Frame):
 
         self.canvas.show()
 
-        self.canvas.get_tk_widget().pack()
+        #self.canvas.get_tk_widget().pack()
 
 
     ###### Fonctions tests Colin ######
@@ -214,10 +214,10 @@ class Interface(Frame):
             #self.anim = animation.FuncAnimation(self.figure, self.genererAnimation, frames=10, interval=10, repeat=False)
 
             self.canvas.show()
-
             self.canvas.get_tk_widget().pack()
-
             self.anim.save('anim.mp4', writer=writer)
+
+
         else:
             with writer.saving(self.figure, "Animation.mp4", 500):
                 for i in range(0, self.nbDeFrames):
@@ -235,11 +235,8 @@ class Interface(Frame):
 
     def genererAnimation(self, i):
 
-        #self.textAvancement.set("Calcul: " + str(i+1) +  "/" + str(self.nbDeFrames))
-
-        #print("temoin")
-
         self.graphique.clear()
+        self.figure.suptitle(('Table de {} modulo {}'.format(self.aLoop, self.modLoop)))
 
         if self.modLoop != 0:
             delta = 2 * np.pi / self.modLoop
