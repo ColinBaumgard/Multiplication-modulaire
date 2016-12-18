@@ -7,7 +7,7 @@
 ################################################
 
 import matplotlib
-matplotlib.use('Agg')
+matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from matplotlib import animation
@@ -206,17 +206,27 @@ class Interface(Frame):
         #self.canvasAnim = FigureCanvasTkAgg(self.figureAnim, self.zoneGraphique)
 
         Writer = animation.writers['ffmpeg']
-        writer = Writer(fps=15, metadata=dict(artist='Colin Baumgard'), bitrate=10000)
+        writer = Writer(fps=self.imageParSeconde, metadata=dict(artist='Colin Baumgard'), bitrate=10000)
 
+        if False :
 
-        self.anim = animation.FuncAnimation(self.figure, self.genererAnimation, frames=self.nbDeFrames, interval=int(1000/self.imageParSeconde), blit=False, repeat=False)
-        #self.anim = animation.FuncAnimation(self.figure, self.genererAnimation, frames=10, interval=10, repeat=False)
+            self.anim = animation.FuncAnimation(self.figure, self.genererAnimation, frames=self.nbDeFrames, interval=int(1000/self.imageParSeconde), blit=False, repeat=False)
+            #self.anim = animation.FuncAnimation(self.figure, self.genererAnimation, frames=10, interval=10, repeat=False)
 
-        self.canvas.show()
+            self.canvas.show()
 
-        self.canvas.get_tk_widget().pack()
+            self.canvas.get_tk_widget().pack()
 
-        self.anim.save('anim.mp4', writer=writer)
+            self.anim.save('anim.mp4', writer=writer)
+        else:
+            with writer.saving(self.figure, "Animation.mp4", 500):
+                for i in range(0, self.nbDeFrames):
+                    self.genererAnimation(i)
+                    self.canvas.show()
+                    #self.canvas.get_tk_widget().pack()
+                    writer.grab_frame()
+                    self.textAvancement.set("Calcul: " + str(i+1) +  "/" + str(self.nbDeFrames))
+
 
 
         os.system("explorer.exe /e,"+ os.getcwd())
