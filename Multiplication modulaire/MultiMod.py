@@ -7,15 +7,15 @@
 ################################################
 
 import matplotlib
-matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+matplotlib.use('TkAgg')
 from matplotlib.figure import Figure
 from matplotlib import animation
-
-import matplotlib.pyplot as plt
 import numpy as np
+
 from tkinter import *
 from tkinter.messagebox import *
+
 import os
 from threading import Thread
 import time
