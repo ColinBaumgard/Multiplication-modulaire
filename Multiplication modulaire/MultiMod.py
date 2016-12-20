@@ -111,16 +111,21 @@ class AnimGenerator(Thread):
         self.interface.graphique.set_xticklabels([])
         self.interface.graphique.set_yticklabels([])
 
+        red, green, blue = 215 / 255, 0, 86 / 255
+
         if self.interface.modLoop != 0:
             delta = 2 * np.pi / self.interface.modLoop
+            delta_color = 1 / self.interface.modLoop
         else:
             delta = 0
+            delta_color = 0
 
         for b in range(0, self.interface.modLoop):
             alpha = b * delta
             beta = ((self.interface.aLoop * b) % self.interface.modLoop) * delta
 
-            self.interface.graphique.plot([alpha, beta], [1,1], c='b')
+            self.interface.graphique.plot([alpha, beta], [1,1], c=[red, green, blue])
+            green += delta_color
 
         self.interface.aLoop = round(self.interface.aLoop, 2) + self.interface.pas
 
@@ -282,11 +287,15 @@ class Interface(Frame):
         self.graphique.clear()
         self.figure.suptitle(('Table de {} \nmodulo {}'.format(round(a, 2), mod)))
 
+        red, green, blue = 215/255, 0, 86/255
+
 
         if mod != 0:
             delta = 2 * np.pi / mod
+            delta_color = 1/mod
         else:
             delta = 0
+            delta_color = 0
 
 
         for b in range(0, mod):
@@ -294,11 +303,13 @@ class Interface(Frame):
             alpha = b * delta
             beta = ((a * b) % mod) * delta
 
-            self.graphique.plot([alpha, beta], [1, 1], c='r')
+            self.graphique.plot([alpha, beta], [1, 1], c=[red, green, blue])
             self.graphique.grid(False)
             self.graphique.axis([0, 1, 0, 1], )
             self.graphique.set_xticklabels([])
             self.graphique.set_yticklabels([])
+
+            green += delta_color
 
         self.canvas.show()
 
