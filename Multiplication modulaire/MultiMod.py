@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+
 ################################################
 #                                              #
 #       Multiplication modulaire               #
@@ -6,12 +10,15 @@
 #                                              #
 ################################################
 
+# import des modules de matplotlib
 import matplotlib
+matplotlib.use('TkAgg')  # on initialise le backend de matplotlib pour l'utiliser avec tkinter
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-matplotlib.use('TkAgg')
 from matplotlib.figure import Figure
 from matplotlib import animation
+
 import numpy as np
+
 
 from tkinter import *
 from tkinter.messagebox import *
@@ -20,19 +27,58 @@ import os
 from threading import Thread
 import time
 
+import logging
+from logging.handlers import RotatingFileHandler
+
+# création de l'objet logger qui va nous servir à écrire dans les logs
+logger = logging.getLogger()
+# on met le niveau du logger à DEBUG, comme ça il écrit tout
+logger.setLevel(logging.DEBUG)
+
+# création d'un formateur qui va ajouter le temps, le niveau
+# de chaque message quand on écrira un message dans le log
+formatter = logging.Formatter('%(asctime)s :: %(levelname)s :: %(message)s')
+# création d'un handler qui va rediriger une écriture du log vers
+# un fichier en mode 'append', avec 1 backup et une taille max de 1Mo
+file_handler = RotatingFileHandler('activity.log', 'a', 1000000, 1)
+# on lui met le niveau sur DEBUG, on lui dit qu'il doit utiliser le formateur
+# créé précédement et on ajoute ce handler au logger
+file_handler.setLevel(logging.DEBUG)
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+
+# création d'un second handler qui va rediriger chaque écriture de log
+# sur la console
+steam_handler = logging.StreamHandler()
+steam_handler.setLevel(logging.DEBUG)
+logger.addHandler(steam_handler)
+
 
 class AnimGenerator(Thread):
+    # Cet objet nous permet de lancer la generation de l'animation sur un thread et donc de ne pas bloquer le programme
 
     def __init__(self, interface):
+
+        logger.info('Initialisation du thread AnimGenerator')
+
         Thread.__init__(self)
-        self.interface = interface
-        self.quit = False
+        self.setDaemon(True)  # on définie le thread comme deamon (le programme s'arrete si il ne reste que des deamons)
+        self.interface = interface  # on récupère le 'lien' vers l'objet parent pour pouvoir récuperer des infos
+
+        self.generate = False
 
     def run(self):
-        while not self.quit:
-            time.sleep(0.1)
+        logger.info('Lancement du thread AnimGenerator')
+        while 1:
+            if self.generate:
+                self.draw()
+                self.generate = False
+            else:
+                time.sleep(0.1)
 
     def draw(self):
+
+        logger.info('Appel de la foonction draw du thread AnimGenerator')
 
         self.interface.lancerAnimation.config(state=DISABLED)
 
@@ -40,6 +86,7 @@ class AnimGenerator(Thread):
         writer = Writer(fps=self.interface.imageParSeconde, metadata=dict(artist='Colin Baumgard'), bitrate=10000)
 
         with writer.saving(self.interface.figure, "Animation.mp4", 500):
+            logger.info('Debut de la boucle de generation de la fonction draw du thread AnimGenerator')
 
             for i in range(0, self.interface.nbDeFrames):
                 self.loopAnim()
@@ -47,9 +94,14 @@ class AnimGenerator(Thread):
                 writer.grab_frame()
                 self.interface.textAvancement.set("Calcul: " + str(i + 1) + "/" + str(self.interface.nbDeFrames))
 
+            logger.info('Fin de la boucle de generation de la fonction draw du thread AnimGenerator')
+
 
         os.system("explorer.exe /e," + os.getcwd())
         self.interface.lancerAnimation.config(state=NORMAL)
+
+        logger.info('Fin de la fonction draw du thread AnimGenerator')
+
 
     def loopAnim(self):
         self.interface.graphique.clear()
@@ -74,14 +126,18 @@ class AnimGenerator(Thread):
 
         return self.interface.graphique,
 
-    def stop(self):
-        self.quit = True
+    def setGenerate(self):
+        self.generate = True
+
 
 
 
 class Interface(Frame):
 
     def __init__(self, fenetre, **kwargs):
+
+        logger.info('Initialisation de l interface')
+
 
         Frame.__init__(self, fenetre, width=768, height=576, **kwargs)
 
@@ -148,10 +204,10 @@ class Interface(Frame):
         self.valeurMod.grid(row=2, column=1)
 
 
-            #Zone de controle animation
+            # Zone de controle animation
         self.zoneDeControleAnimation = LabelFrame(self.zoneDeControle, text="Création d'animations")
 
-                #Paramètres:
+                # Paramètres:
 
                     # de... à... par frequence de ...
         self.labelDe = Label(self.zoneDeControleAnimation, text='A variant de: ')
@@ -209,6 +265,8 @@ class Interface(Frame):
 
         self.actualiser()
 
+        logger.info("Fin d'initialisation de l'interface")
+
 
 
     def actualiser(self):
@@ -238,7 +296,7 @@ class Interface(Frame):
 
             self.graphique.plot([alpha, beta], [1, 1], c='r')
             self.graphique.grid(False)
-            self.graphique.axis([0,1,0,1], )
+            self.graphique.axis([0, 1, 0, 1], )
             self.graphique.set_xticklabels([])
             self.graphique.set_yticklabels([])
 
@@ -259,6 +317,8 @@ class Interface(Frame):
 
     def animation(self):
 
+        logger.info("Demande de lancement de la génératin de l'animation")
+
         self.verifier()
 
         self.aLoop = float(self.spinDe.get())
@@ -277,13 +337,13 @@ class Interface(Frame):
                                  '- Durée: {}s\n'
                                  '- Nombre de calcul: {}\n'
                                  '- Temps max estimé: {}min\n'
-                                 'Voulez vous lancer la simulation ?'.format(self.aLoop, limite, self.modLoop, duree, self.nbDeFrames, round((self.nbDeFrames*1.5)/60, 2))):
+                                 'Voulez vous lancer la simulation ?'
+                                 ''.format(self.aLoop, limite, self.modLoop, duree, self.nbDeFrames, round((self.nbDeFrames*1.5)/60, 2))):
 
-            self.animGenerator.draw()
+            #self.animGenerator.draw()
+            self.animGenerator.setGenerate()
 
-
-    def stop(self):
-        self.animGenerator.stop()
+        logger.info("Fin de la génération de l'animation (Objet Interafce)")
 
 
 
@@ -293,5 +353,3 @@ fenetre.title('MultiMod')
 interface = Interface(fenetre)
 
 interface.mainloop()
-
-interface.stop()
