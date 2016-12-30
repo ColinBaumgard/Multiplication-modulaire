@@ -143,19 +143,15 @@ class Fenetre(Frame):
 
         Frame.__init__(self, fenetre, width=768, height=576, **kwargs)
 
-        self.animGenerator = AnimGenerator(self)
-        self.animGenerator.start()
+        # variables globales
 
+        self.animGenerator = AnimGenerator(self) # création de l'objet pour l'animation
+        self.animGenerator.start() # on lance le thread qui est maintenant prêt à travailler
 
-        self.imageParSeconde = 12
-
-        #self.atest = 0
-        #self.idImage = 0
-
-
+        self.imageParSeconde = 12 # constante
         self.fenetre = fenetre
 
-        # variables globales
+        #Construction graphique:
 
         # Zone de graphique:
         self.zoneGraphique = Frame(self.fenetre)
@@ -280,15 +276,22 @@ class Fenetre(Frame):
         self.graphique.clear()
         self.figure.suptitle(('Table de {} \nmodulo {}'.format(round(a, 2), mod)))
 
-        red, green, blue = 215/255, 0, 86/255
+        red, green, blue = 62/255, 103/255, 235/255
+        red_fin, green_fin, blue_fin = 250/255, 16/255, 87/255
+
 
 
         if mod != 0:
             delta = 2 * np.pi / mod
-            delta_color = 1/mod
+            delta_red = (red_fin - red)/mod
+            delta_green = (green_fin - green) / mod
+            delta_blue = (blue_fin - blue) / mod
+
         else:
             delta = 0
-            delta_color = 0
+            delta_red = 0
+            delta_green = 0
+            delta_blue = 0
 
 
         for b in range(0, mod):
@@ -302,13 +305,12 @@ class Fenetre(Frame):
             self.graphique.set_xticklabels([])
             self.graphique.set_yticklabels([])
 
-            green += delta_color
+            red += delta_red
+            green += delta_green
+            blue += delta_blue
 
         self.canvas.show()
 
-
-
-    ###### Fonctions tests Colin ######
 
 
     def verifier(self):
