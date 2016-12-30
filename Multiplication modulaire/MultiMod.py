@@ -134,10 +134,7 @@ class AnimGenerator(Thread):
     def setGenerate(self):
         self.generate = True
 
-
-
-
-class Interface(Frame):
+class Fenetre(Frame):
 
     def __init__(self, fenetre, **kwargs):
 
@@ -163,7 +160,7 @@ class Interface(Frame):
         # Zone de graphique:
         self.zoneGraphique = Frame(self.fenetre)
 
-        self.figure = Figure(figsize=(7, 7), dpi=100)
+        self.figure = Figure(figsize=(5, 5), dpi=100)
         self.graphique = self.figure.add_subplot(111, projection='polar')
         self.graphique.grid(False)
         self.graphique.axis([0, 1, 0, 1], )
@@ -182,20 +179,20 @@ class Interface(Frame):
 
 
             #zoneControleStatique
-        self.zoneDeControleStatique = LabelFrame(self.zoneDeControle, text='Contrôle statiques')
+        self.zoneDeControleStatique = LabelFrame(self.zoneDeControle, text='Contrôles statiques')
 
                 # label description:
         self.labelDescription = Label(self.zoneDeControleStatique, text='Table des a modulo')
 
                 # spin a
         self.labelA = Label(self.zoneDeControleStatique, text='a:')
-        self.valeurA = Spinbox(self.zoneDeControleStatique, from_=1, to_=1000, command=self.actualiser)
+        self.valeurA = Spinbox(self.zoneDeControleStatique, from_=1, to_=1000, command=self.afficher)
         self.valeurA.delete(0, 'end')
         self.valeurA.insert('end', 2)
 
                 # spin mod
         self.labelMod = Label(self.zoneDeControleStatique, text='modulo:')
-        self.valeurMod = Spinbox(self.zoneDeControleStatique, from_=1, to_=1000, command=self.actualiser)
+        self.valeurMod = Spinbox(self.zoneDeControleStatique, from_=1, to_=1000, command=self.afficher)
         self.valeurMod.delete(0, 'end')
         self.valeurMod.insert('end', 20)
 
@@ -268,21 +265,17 @@ class Interface(Frame):
 
         self.zoneDeControle.grid(row=1, column=0)
 
-        self.actualiser()
+        self.afficher()
 
         logger.info("Fin d'initialisation de l'interface")
 
 
 
-    def actualiser(self):
+
+    def afficher(self):
 
         a = float(self.valeurA.get())
         mod = int(self.valeurMod.get())
-
-        self.afficher(a, mod)
-
-
-    def afficher(self, a, mod):
 
         self.graphique.clear()
         self.figure.suptitle(('Table de {} \nmodulo {}'.format(round(a, 2), mod)))
@@ -361,6 +354,6 @@ class Interface(Frame):
 
 fenetre = Tk()
 fenetre.title('MultiMod')
-interface = Interface(fenetre)
+interface = Fenetre(fenetre)
 
 interface.mainloop()
