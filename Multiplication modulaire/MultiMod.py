@@ -10,6 +10,7 @@
 #                                              #
 ################################################
 
+
 # import des modules de matplotlib
 import matplotlib
 matplotlib.use('TkAgg')  # on initialise le backend de matplotlib pour l'utiliser avec tkinter
@@ -19,14 +20,17 @@ from matplotlib import animation
 
 import numpy as np
 
-
+# imports graphiques
 from tkinter import *
 from tkinter.messagebox import *
+from  tkinter.filedialog import *
 
+# autres librairies
 import os
 from threading import Thread
 import time
 
+# import du log
 import logging
 from logging.handlers import RotatingFileHandler
 
@@ -58,52 +62,58 @@ class AnimGenerator(Thread):
     # Cet objet nous permet de lancer la generation de l'animation sur un thread et donc de ne pas bloquer le programme
 
     def __init__(self, interface):
+        #initialisation de l'objet thread
 
         logger.info('Initialisation du thread AnimGenerator')
 
         Thread.__init__(self)
-        self.setDaemon(True)  # on définie le thread comme deamon (le programme s'arrete si il ne reste que des deamons)
+        self.setDaemon(True)  # on définie le thread comme deamon ie. le programme s'arrete si il ne reste que des deamons
         self.interface = interface  # on récupère le 'lien' vers l'objet parent pour pouvoir récuperer des infos
 
         self.generate = False
 
     def run(self):
         logger.info('Lancement du thread AnimGenerator')
-        while 1:
-            if self.generate:
-                self.draw()
-                self.generate = False
+        while 1: # boucle événementielle du thread
+            if self.generate: # si on detecte une demande de génération
+                self.draw() # on appelle la fonction adéquate
+                self.generate = False # et on n'oublie pas de remettre le booléen à False
             else:
                 time.sleep(0.1)
 
     def draw(self):
 
+        # fonction qui gère la création de l'animation
+
         logger.info('Appel de la foonction draw du thread AnimGenerator')
 
         self.interface.lancerAnimation.config(state=DISABLED)
 
-        Writer = animation.writers['ffmpeg']
+        Writer = animation.writers['ffmpeg'] # création d'un objet qui nous permet d'écrire une vidéo
         writer = Writer(fps=self.interface.imageParSeconde, metadata=dict(artist='Colin Baumgard'), bitrate=10000)
 
-        with writer.saving(self.interface.figure, "Animation.mp4", 500):
+        with writer.saving(self.interface.figure, "Animation.mp4", 500): #boucle de calcul de la vidéo
             logger.info('Debut de la boucle de generation de la fonction draw du thread AnimGenerator')
 
             for i in range(0, self.interface.nbDeFrames):
-                self.loopAnim()
-                self.interface.canvas.show()
-                writer.grab_frame()
-                self.interface.textAvancement.set("Calcul: " + str(i + 1) + "/" + str(self.interface.nbDeFrames))
+                self.loopAnim() # création du graphique ie. de l'image à implémenter
+                self.interface.canvas.show() # qu'on afficher au passage sur la fenêtre
+                writer.grab_frame() # on ajoute l'image
+                self.interface.textAvancement.set("Calcul: " + str(i + 1) + "/" + str(self.interface.nbDeFrames)) # on affiche le compteur sur la fenêtre
 
             logger.info('Fin de la boucle de generation de la fonction draw du thread AnimGenerator')
 
 
-        os.system("explorer.exe /e," + os.getcwd())
+        os.system("explorer.exe /e," + os.getcwd()) # une fois le calcul fini, on affiche le fichier
         self.interface.lancerAnimation.config(state=NORMAL)
 
         logger.info('Fin de la fonction draw du thread AnimGenerator')
 
 
     def loopAnim(self):
+        # fonction très semblable à afficher
+
+        # on préoar
         self.interface.graphique.clear()
         self.interface.figure.suptitle(('Table de {} \nmodulo {}'.format(round(self.interface.aLoop, 2), self.interface.modLoop)))
         self.interface.graphique.grid(False)
@@ -113,6 +123,7 @@ class AnimGenerator(Thread):
 
         red, green, blue = 215 / 255, 0, 86 / 255
 
+        # on évite de diviser par 0
         if self.interface.modLoop != 0:
             delta = 2 * np.pi / self.interface.modLoop
             delta_color = 1 / self.interface.modLoop
@@ -120,6 +131,8 @@ class AnimGenerator(Thread):
             delta = 0
             delta_color = 0
 
+
+        # boucle de calcul
         for b in range(0, self.interface.modLoop):
             alpha = b * delta
             beta = ((self.interface.aLoop * b) % self.interface.modLoop) * delta
@@ -132,11 +145,13 @@ class AnimGenerator(Thread):
         return self.interface.graphique,
 
     def setGenerate(self):
+        # méthode qui fait le lien entre la classe Fenetre et le thread AnimGenerator
         self.generate = True
 
 class Fenetre(Frame):
 
     def __init__(self, fenetre, **kwargs):
+        # initialisation
 
         logger.info('Initialisation de l interface')
 
@@ -270,19 +285,24 @@ class Fenetre(Frame):
 
     def afficher(self):
 
+        # récuparation des valeurs utiles
         a = float(self.valeurA.get())
         mod = int(self.valeurMod.get())
 
+
+        # préparation du graphique
         self.graphique.clear()
         self.figure.suptitle(('Table de {} \nmodulo {}'.format(round(a, 2), mod)))
 
+        #initialisation des couleurs
         red, green, blue = 62/255, 103/255, 235/255
         red_fin, green_fin, blue_fin = 250/255, 16/255, 87/255
 
 
-
+        # on évite de diviser par 0
         if mod != 0:
             delta = 2 * np.pi / mod
+
             delta_red = (red_fin - red)/mod
             delta_green = (green_fin - green) / mod
             delta_blue = (blue_fin - blue) / mod
@@ -294,27 +314,31 @@ class Fenetre(Frame):
             delta_blue = 0
 
 
+        # boucle de calcul
         for b in range(0, mod):
 
             alpha = b * delta
             beta = ((a * b) % mod) * delta
 
+            # ajout du segement n au graphique
             self.graphique.plot([alpha, beta], [1, 1], c=[red, green, blue])
             self.graphique.grid(False)
             self.graphique.axis([0, 1, 0, 1], )
             self.graphique.set_xticklabels([])
             self.graphique.set_yticklabels([])
 
+            # dégradé
             red += delta_red
             green += delta_green
             blue += delta_blue
+        #tous les segements sont maintenant sur le graphique
 
-        self.canvas.show()
+        self.canvas.show() # il ne reste qu'a l'afficher
 
 
 
     def verifier(self):
-
+        # vérification des valeurs entrées par l'utilisateur
         if float(self.spinDe.get()) > float(self.spinA.get()):
             self.spinA.delete(0, 'end')
             self.spinA.insert('end', float(self.spinDe.get()))
@@ -322,22 +346,26 @@ class Fenetre(Frame):
 
 
     def animation(self):
+        # lancement de l'animation
 
         logger.info("Demande de lancement de la génératin de l'animation")
 
-        self.verifier()
+        self.verifier() # vérification
 
+        # récupération des valeurs
         self.aLoop = float(self.spinDe.get())
         self.modLoop = int(self.spinMod.get())
         limite = float(self.spinA.get())
         duree = float(self.spinDuree.get())
 
+        #calculs des valeurs utiles
         self.nbDeFrames = int(self.imageParSeconde * duree)
 
         delta = limite - self.aLoop
 
         self.pas = round(delta / self.nbDeFrames, 3)
 
+        # demande de confirmation
         if askyesno('Animation', 'Récapitulatif:\n'
                                  '- A variant de {} à {} modulo {}\n'
                                  '- Durée: {}s\n'
@@ -346,16 +374,17 @@ class Fenetre(Frame):
                                  'Voulez vous lancer la simulation ?'
                                  ''.format(self.aLoop, limite, self.modLoop, duree, self.nbDeFrames, round((self.nbDeFrames*1.5)/60, 2))):
 
-            #self.animGenerator.draw()
-            self.animGenerator.setGenerate()
+            self.animGenerator.setGenerate() # appel de la fonction qui commande la génération de l'animation dans l'objet AnimGenerator
 
         logger.info("Fin de la génération de l'animation (Objet Interafce)")
 
 
+# Début du programme
 
+fenetre = Tk() #on creer la fenetre
+fenetre.title('MultiMod') # on la renomme
+interface = Fenetre(fenetre)    #On creer un objet fenetre
 
-fenetre = Tk()
-fenetre.title('MultiMod')
-interface = Fenetre(fenetre)
+interface.mainloop() # on lance la boucle évémentielle
 
-interface.mainloop()
+#fin du programme
